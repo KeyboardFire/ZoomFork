@@ -29,11 +29,44 @@ this.ZoomFork = function(source, options) {
             break;
     }
 
-    // Do stuff
-    var asdfasdfasdf = 12345;
+    // First, we're going to parse the source, using mostly markdown and a few other things.
+    // Step 1: Parse "labels" (ex. "death:\nYou die!")
+    var labelRegex = /^.*:$/gm, match;
+    var labels = {}, labelName, labelIndex;
+    while (true) {
+        match = labelRegex.exec(source);
+
+        if (labelName) {
+            if (labels[labelName]) {
+                // Appending to a previously existing label
+                labels[labelName] += '\n';
+            } else {
+                // Initialize the label
+                labels[labelName] = '';
+            }
+            labels[labelName] += source.slice(labelIndex + 1, (match ? match.index - 1 : undefined));
+        }
+
+        if (match === null) break;
+
+        labelName = match[0].slice(0, -1);
+        labelIndex = labelRegex.lastIndex;
+    }
+
+    // Step 2: Parse them with Markdown
+    for (var label in labels) {
+        labels[label] = stmd.render(labels[label]);
+    }
+
+    // Step 3: Expand the modified version of inline HTML and JS
+    // TODO
+
+    console.log(labels);
 
     // All the public stuff that's returned from the ZoomFork() function goes here
     return {
         source: source
     };
 };
+
+ZoomFork('this:\nis\na\ntest\nand:\nthis\nis\ntoo\nthis:\nold\nappend');
