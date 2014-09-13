@@ -6,107 +6,25 @@
         <script type='text/javascript' src='../ZoomFork/zoomfork.js'></script>
         <script type='text/javascript'>
             window.onload = function() {
-                var zfs = document.getElementById('zoomfork-source');
-                var zf = ZoomFork(zfs.innerText);
-                document.body.removeChild(zfs);
-                zf.renderTo(document.getElementById('zoomfork-render'));
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', 'game.zfk');
+                xhr.onload = function() {
+                    var zf = new ZoomFork(this.responseText);
+                    zf.renderTo(document.getElementById('zoomfork-render'));
+                };
+                xhr.send();
             }
         </script>
         <style type='text/css'>
-            #zoomfork-source {
-                display: none;
-            }
-
             #zoomfork-render {
                 max-width: 800px;
                 margin: 0px auto;
+                font-family: sans-serif;
             }
         </style>
         <title>ZoomFork: Home</title>
     </head>
     <body>
-        <pre id='zoomfork-source' style='display:none'>
-
-# A Really Hard Game&trade;
-
-This game is really hard.
-
-I mean *really*, **really**, REALLY hard!
-
-Here are the reasons why it's so hard: 
-- It's difficult
-- It's hard
-- It's very difficult
-- It's really hard
-
----
-
-Do you [give up](http://sadtrombone.com), or do you [play the game anyway](@begin)?
-
-begin:
-# You play the game
-
-Congratulations! You are brave and play the game anyway.
-
-This game is about an average day that becomes much less average as it goes on.
-
-So, let's start. You're sitting in your house when you hear a tiny scratch outside; you're not even sure you just imagined it. What do you do?
-
-- I [go outside to check](@outside)
-- I [ignore the noise](@ignore)
-- I [run in circles and panic](@panic)
-
-outside:
-# You go outside
-
-This is a weird and new environment. You see a really bright lamp on the big blue ceiling, which you are curious about and want to [investigate](@sun). Or you can [sniff the grass](@grass) because it's green and shiny and you want to know what it smells like. Or do you [ignore the distractions and look for the source of the scratching noise](@outside2)?
-
-ignore:
-# You ignore the noise
-
-You decide to ignore the noise. In fact, you just want to ignore everything. You don't feel like listening to anybody. You ignore your body's feelings and die of thirst.
-
-### You died of laziness
-
-[Try again?](@begin)
-
-panic:
-# You run in circles and panic
-
-You start running in circles screaming. Nothing really happens.
-
-You're out of ideas now. Do you [keep running in more circles](@panic2)? Or do you [sit back down and ignore the noise](@ignore)?
-
-sun:
-# You investigate the sun
-
-Remember how your parents and teachers always told you not to stare directly at the sun? Yeah? Well, did you listen to them? You didn't, *did you*?
-
-### Your eyes burn to a crisp
-
-[Try again?](@begin)
-
-grass:
-# You sniff the grass
-
-Um. Oookay, that's an... *interesting* thing to do. Anyway, you sit down and smell the grass. But as you sit down, you notice a small anomaly in the side of your house. It looks almost like a snake hole.
-
-Do you [investigate](@househole)? Or do you [continue to inhale the refreshing vapors](@grass2)?
-
-outside2:
-# You continue to investigate
-
-You try to find the source of the noise, ignoring all of the distractions that you come across.
-
-TODO
-
-panic2:
-# You continue to run in circles
-
-TODO
-
-        </pre>
-        <div id='zoomfork-render'>
-        </div>
+        <div id='zoomfork-render'></div>
     </body>
 </html>
