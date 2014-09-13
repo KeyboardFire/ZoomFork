@@ -1,25 +1,53 @@
 var global = this;
 global.ZoomFork = function(source, options) {
-    // Normalize arguments (source guaranteed to be string, options guaranteed to be a truthy value)
+    // Normalize arguments (source guaranteed to be array of strings, options guaranteed to be a truthy value)
     if (source === null) throw new Error('ZoomFork: called with null as first argument');
     if (typeof source == 'function') source = source();
     if (typeof source /* still */ == 'function') throw new Error('ZoomFork: called with nested function as first argument');
     switch (typeof source) {
         case 'string':
+            source = [source];
             if (!options) options = {};
             break;
         case 'object':
-            if (source.source) {
+            if (source.constructor === Array) {
+                for (var i = 0; i < source.length; ++i) {
+                    if (typeof source[i] !== 'string') {
+                        throw new Error('ZoomFork: called with array containing non-string as first argument');
+                    }
+                }
+                if (!options) options = {};
+            } else if (source.source) {
                 options = source;
-                source = options.source;
+                switch (typeof options.source) {
+                    case 'string':
+                        source = [options.source];
+                        break;
+                    case 'object':
+                        if (options.source.constructor === Array) {
+                            for (var i = 0; i < source.length; ++i) {
+                                if (typeof source[i] !== 'string') {
+                                    throw new Error('ZoomFork: called with array containing non-string as source key of first argument');
+                                }
+                            }
+                        }
+                        source = options.source;
+                        break;
+                    default:
+                        throw new Error('ZoomFork: called with ' + (typeof source) + ' as source key of first argument');
+                        break;
+                }
             } else {
                 throw new Error('ZoomFork: called with object missing source key as first argument');
             }
             break;
         default:
-            throw new Error('ZoomFork: called with ' + (typeof source) + 'as first argument');
+            throw new Error('ZoomFork: called with ' + (typeof source) + ' as first argument');
             break;
     }
+
+    // Okay, now make the source array of strings into just one big string
+    source = source.join('\n');
 
     // First, we're going to parse the source, using mostly markdown and a few other things.
     // Step 1: Parse "labels" (ex. "death:\nYou die!")
