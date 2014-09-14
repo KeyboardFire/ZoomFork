@@ -1,5 +1,5 @@
 <?php
-$root = "/var/www/ZoomFork/server";
+$root = $_SERVER['DOCUMENT_ROOT'] . '/zoomfork';
 session_save_path("$root/_sessions"); session_start();
 ?>
 <!DOCTYPE html>
@@ -43,13 +43,38 @@ session_save_path("$root/_sessions"); session_start();
                 </table>
             </form>
         <?php } else {
-            include("$root/dbcreds.php");
+                // First check the CAPTCHA
+                require_once("$root/recaptchalib.php");
+                include("$root/recaptchacreds.php");
+                $captcha = recaptcha_check_answer($captchaprivatekey, $_SERVER["REMOTE_ADDR"],
+                    $_POST["recaptcha_challenge_field"], $_POST["recaptcha_response_field"]);
+                if (!$captcha->is_valid) {
+                    die("You entered the CAPTCHA wrong. (Yeah, yeah, I know, they're frustrating.) Please go back and try again.");
+                }
+
             try {
-                $dbh = new PDO('mysql:host=keyboardfirecom.ipagemysql.com;dbname=zoomfork', $dbuser, $dbpass);
-                echo "Good!";
+                include("$root/dbcreds.php");
+                $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
+                if (isset($_POST["login"])) {
+                    $stmt = $dbh->prepare("SELECT id, password, salt FROM users WHERE username = ?");
+                    $stmt->execute(array($_POST["username"]));
+                    list($id, $password, $salt) = $stmt->fetch();
+                    if (crypt($_POST["password"], '$2a$07$' . $salt . '$') == $password) {
+                        die("Successfully logged in!");
+                    } else {
+                        die("Wrong password; please try again.");
+                    }
+                } else if (isset($_POST["register"])) {
+                    $salt = uniqid("", true);
+                    $saltypass = crypt($_POST["password"], '$2a$07$' . $salt . '$');
+                    $stmt = $dbh->prepare("INSERT INTO users (username, password, salt) VALUES (?, ?, ?)");
+                    $stmt->execute(array($_POST["username"], $saltypass, $salt));
+                    die("Account successfully created!");
+                } else {
+                    die("Either your browser sent a weird POST request, or you tried to manually submit the form without logging in <em>or</em> registering. In either case, I definitely can't do anything about it. Sorry.");
+                }
             } catch (PDOException $e) {
-                echo "Error! " . $e->getMessage();
-                die();
+                die("A database error has occurred. Sorry for the inconvenience; we're probably already trying to fix it! [" . $e->getMessage() . "]");
             }
         } ?>
     </body>

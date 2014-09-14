@@ -1,5 +1,5 @@
 <?php
-$root = ".";
+$root = $_SERVER['DOCUMENT_ROOT'] . '/zoomfork';
 session_save_path("$root/_sessions"); session_start();
 ?>
 <!DOCTYPE html>
