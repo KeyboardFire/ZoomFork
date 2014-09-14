@@ -1,0 +1,54 @@
+#container {
+    max-width: 800px;
+    margin: 0px auto;
+    background-color: #eee;
+    padding: 40px 10px;
+}
+
+#logo {
+    float: left;
+}
+
+#logo img {
+    margin: 10px 0px;
+}
+
+#widgets-wrapper {
+    display: table;
+    height: 200px; /* logo height */
+}
+
+#widgets {
+    display: table-cell;
+    vertical-align: middle;
+    padding-left: 10px;
+}
+
+#widgets span {
+    padding: 0px 5px;
+}
+
+#header {
+    background-color: #ded;
+}
+
+/* logo width + minimum widget width (400px) */
+@media (max-width: 900px) {
+    #logo {
+        float: none;
+    }
+    #logo img {
+        max-width: 100%;
+    }
+    #widgets-wrapper {
+        height: auto;
+        display: block;
+    }
+    #widgets {
+        display: block;
+        padding-bottom: 15px;
+    }
+    #header {
+        text-align: center;
+    }
+}

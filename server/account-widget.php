@@ -1,4 +1,3 @@
-<div id='account-widget'>
 <?php
 if (isset($_SESSION["userid"])) {
     $uname = htmlspecialchars($_SESSION['username']);
@@ -6,5 +5,3 @@ if (isset($_SESSION["userid"])) {
 } else {
     echo "<a href='$webroot/login.php'>Log in or register</a>";
 }
-?>
-</div>

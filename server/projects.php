@@ -7,12 +7,20 @@ session_save_path("$serverroot/_sessions"); session_start();
 <html lang='en'>
     <head>
         <?php include("$serverroot/head.php"); ?>
-        <title>The official ZoomFork server</title>
+        <title>Your projects - ZoomFork</title>
     </head>
     <body>
         <?php include("$serverroot/header.php"); ?>
         <div id='container'>
-            Welcome to the official ZoomFork server!
+            <a href='create.php'><button>Create a new project</button></a>
+            <h1>Your projects</h1>
+            <li>Foo</li>
+            <li>Foo</li>
+            <li>Foo</li>
+            <li>Foo</li>
+            <li>Foo</li>
+            <li>Foo</li>
+            <li>Foo</li>
         </div>
     </body>
 </html>

@@ -82,7 +82,6 @@ if (!isset($_SESSION["userid"]) && count($_POST) != 0) {
 <!DOCTYPE html>
 <html lang='en'>
     <head>
-        <meta charset='utf-8' />
         <style type='text/css'>
             input {
                 width: 100%;
@@ -93,40 +92,42 @@ if (!isset($_SESSION["userid"]) && count($_POST) != 0) {
     </head>
     <body>
         <?php include("$serverroot/header.php"); ?>
-        <?php if (isset($_SESSION["userid"])) { ?>
-            You are already logged in. <a href='logout.php'>Log out?</a>
-        <?php } else { ?>
-            <?php
-                if ($msg != "") {
-                    echo "<div id='checkinfomsg'>$msg</div>";
-                }
-            ?>
-            <form action='login.php' method='post'>
-                <table>
-                    <tbody>
-                        <tr>
-                            <th><label for='username'>Username</label></th>
-                            <td><input id='username' name='username' type='text' /></td>
-                        </tr>
-                        <tr>
-                            <th><label for='password'>Password</label></th>
-                            <td><input id='password' name='password' type='password' /></td>
-                        </tr>
-                        <tr>
-                            <th>CAPTCHA</th>
-                            <td><?php
-                                require_once("$serverroot/recaptchalib.php");
-                                echo recaptcha_get_html("6LfaQPoSAAAAAFJ2zs_R5YQ7iBOZmF7Bnbs6v570");
-                            ?></td>
-                        <tr>
-                            <td colspan=2><input class='submit-button' type='submit' name='login' value='Log in' /></td>
-                        </tr>
-                        <tr>
-                            <td colspan=2><input class='submit-button' type='submit' name='register' value='Register' /></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </form>
-        <?php } ?>
+        <div id='container'>
+            <?php if (isset($_SESSION["userid"])) { ?>
+                You are already logged in. <a href='logout.php'>Log out?</a>
+            <?php } else { ?>
+                <?php
+                    if ($msg != "") {
+                        echo "<div id='checkinfomsg'>$msg</div>";
+                    }
+                ?>
+                <form action='login.php' method='post'>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th><label for='username'>Username</label></th>
+                                <td><input id='username' name='username' type='text' /></td>
+                            </tr>
+                            <tr>
+                                <th><label for='password'>Password</label></th>
+                                <td><input id='password' name='password' type='password' /></td>
+                            </tr>
+                            <tr>
+                                <th>CAPTCHA</th>
+                                <td><?php
+                                    require_once("$serverroot/recaptchalib.php");
+                                    echo recaptcha_get_html("6LfaQPoSAAAAAFJ2zs_R5YQ7iBOZmF7Bnbs6v570");
+                                ?></td>
+                            <tr>
+                                <td colspan=2><input class='submit-button' type='submit' name='login' value='Log in' /></td>
+                            </tr>
+                            <tr>
+                                <td colspan=2><input class='submit-button' type='submit' name='register' value='Register' /></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            <?php } ?>
+        </div>
     </body>
 </html>
