@@ -1,0 +1,31 @@
+THE TODO LIST OF THE ZOOMY FORKNESS
+
+===== SERVER =====
+
+  === USER EXPERIENCE ===
+
+    - Hide stuff that needs an account when not logged in
+    - JS validation before getting annoying server errors (also stop projects with no name)
+    - Make it prettier!
+
+  === SECURITY ===
+
+    - Confirmation for logout, edit, delete, etc.
+    - Better $_SESSION security
+    - Maximum project amount
+
+  === FUNCTIONALITY ===
+
+    - Ability to delete a project
+
+===== ZOOMFORK LANGUAGE / SPEC ====
+
+  === ZOOMSPOON (or whatever the scripting language should be called) ===
+
+    - The stuff on the paper in my desk (TODO transfer here)
+
+  === TOOLS ===
+
+    - An IDE that lets you view scenes separately instead of all in the same text area (or group them with special comments)
+    - Simulator / debugger / automated tester (random chooser?)
+    - Tutorial and/or docs
