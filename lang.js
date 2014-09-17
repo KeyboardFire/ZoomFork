@@ -1,35 +1,108 @@
 var TYPES = {
     NIL: 0,
     NUM: 1,
-    BOOL: 2
-}
+    BOOL: 2,
+    STR: 3
+};
 
 var FUNCTIONS = [
     // Control flow
     {data: ['if', TYPES.BOOL, 'then', TYPES.NIL], rtn: TYPES.NIL},
+    {data: ['unless', TYPES.BOOL, 'do', TYPES.NIL], rtn: TYPES.NIL},
+    {data: ['while', TYPES.BOOL, 'do', TYPES.NIL], rtn: TYPES.NIL},
+    {data: ['until', TYPES.BOOL, 'do', TYPES.NIL], rtn: TYPES.NIL},
+    {data: ['otherwise', TYPES.NIL], rtn: TYPES.NIL},
+    {data: ['else', TYPES.NIL], rtn: TYPES.NIL},
 
     // Binary operators
+    {data: [TYPES.NUM, 'plus', TYPES.NUM], rtn: TYPES.NUM},
+    {data: [TYPES.NUM, 'minus', TYPES.NUM], rtn: TYPES.NUM},
+    {data: [TYPES.NUM, 'times', TYPES.NUM], rtn: TYPES.NUM},
+    {data: [TYPES.NUM, 'divided by', TYPES.NUM], rtn: TYPES.NUM},
+    {data: [TYPES.NUM, 'to power', TYPES.NUM], rtn: TYPES.NUM},
     {data: [TYPES.NUM, 'is less than', TYPES.NUM], rtn: TYPES.BOOL},
+    {data: [TYPES.NUM, 'is greater than', TYPES.NUM], rtn: TYPES.BOOL},
+
+    // Unary mathematical operators
+    {data: ['absolute value', TYPES.NUM], rtn: TYPES.NUM},
+
+    // I/O
+    {data: ['output', TYPES.NIL], rtn: TYPES.NIL},
+
+    // Misc.
+    {data: ['set', TYPES.STR, 'to', TYPES.NIL], rtn: TYPES.NIL},
 
     // Literals (double bracket syntax; hardcoded into parsing function)
     {data: [[TYPES.NUM]], rtn: TYPES.NUM}
 ]
 
-function parse(expr, rtn, asdf) {
+function parse(expr, rtn, depth) {
     if (rtn === undefined) rtn = TYPES.NIL;
-
-    // we're going to try all functions possible with the correct return value
-    var validFuncs = filter(FUNCTIONS, function(f) {
-        if (rtn === TYPES.NIL) return true;
-        if (f.rtn === rtn) return true;
-        return false;
-    });
+    if (depth === undefined) depth = 1;
+    // <HACK> (see the huge comment a few lines below)
+    if (depth > 8) return false;
+    // </HACK>
 
     // loop through them
     var branches = [];
     funcs:
-    for (var funcIdx = 0; funcIdx < validFuncs.length; ++funcIdx) {
-        var func = validFuncs[funcIdx], exprIdx = 0, path = [];
+    for (var funcIdx = 0; funcIdx < FUNCTIONS.length; ++funcIdx) {
+        var func = FUNCTIONS[funcIdx];
+
+        // make sure it has the correct return value
+        if (rtn !== TYPES.NIL && func.rtn !== rtn) continue;
+
+        /*
+         * okay, so this was a big problem before and here's an ugly kludge to solve it
+         * here's the basic idea: when the thing wanted a number, it looped through all the
+         *   functions that returned numbers to see if they worked
+         * eventually it would reach <number> plus <number>
+         * but "plus" returns a number, and it also has a number as its first argument
+         * so when parsing that, it would try (<number> plus <number>) plus <number> and so on
+         * I fixed it by searching for all the constant strings in the right order
+         * which partially worked, because not everything was getting stack overflows
+         * but "plus" still didn't work. because...
+         * it kept finding the same "plus" each recurse (?)
+         * I spent about 30 minutes on some elaborate "indeces already found" system
+         * but I realized the lazier -- uhh, I mean, more efficient -- way of doing this
+         *   would be to keep track of the recurse depth and abort when it's too high
+         * so I was lazy and did that
+         * TODO: this is really inefficient; it should only abort on n consecutive calls of
+         *   the *same* function
+         * and now the code's really messy
+         * sorry about that
+         */
+        // <HACK>
+        // step 1: get a list of all constant strings in the function
+        var funcStrings = [];
+        for (var i = 0; i < func.data.length; ++i) {
+            if (typeof func.data[i] === 'string') funcStrings.push(func.data[i]);
+        }
+        // only continue if there are constants (literals don't have string constants)
+        if (funcStrings.length >= 1) {
+            // step 2: walk through the expression and verify the function's constant strings
+            // appear in the right order
+            var currentWords = funcStrings.shift().split(' ');
+            for (var i = 0; i < expr.length; ++i) {
+                if (arraysEqual(expr.slice(i, i + currentWords.length), currentWords)) {
+                    // yay! it's good
+                    currentWords = funcStrings.shift();
+                    if (currentWords === undefined) {
+                        // everything's good!
+                        break;
+                    }
+                    currentWords = currentWords.split(' ');
+                }
+            }
+            // step 3: fail if the constants weren't found
+            if (currentWords !== undefined) {
+                // this function didn't work
+                continue funcs;
+            }
+        }
+        // </HACK>
+
+        var exprIdx = 0, path = [];
         // this looks ugly but I have to define this in here because scope
         var backtrack = function() {
             while (true) {
@@ -70,6 +143,7 @@ function parse(expr, rtn, asdf) {
                     exprIdx += words.length;
                 } else {
                     // fail! backtrack if possible; otherwise just continue
+                    // (this is ugly code duplication from a few lines up)
                     var bt = backtrack();
                     if (bt !== false) {
                         i = bt;
@@ -84,7 +158,7 @@ function parse(expr, rtn, asdf) {
                 for (var segmentEnd = exprIdx + 1; segmentEnd <= expr.length; ++segmentEnd) {
                     var segment = expr.slice(exprIdx, segmentEnd);
                     // if this expression segment returns the right value
-                    var parsed = parse(segment, type);
+                    var parsed = parse(segment, type, depth + 1);
                     if (parsed) {
                         // it's a possibility (remember, ambiguity exists)
                         possibilities.push({parsed: parsed, segmentEnd: segmentEnd});
@@ -143,11 +217,6 @@ function parse(expr, rtn, asdf) {
 }
 
 function filter(arr, condition) {
-    var newArr = [];
-    for (var i = 0; i < arr.length; ++i) {
-        if (condition(arr[i])) newArr.push(arr[i]);
-    }
-    return newArr;
 }
 
 function arraysEqual(a, b) {
@@ -156,8 +225,11 @@ function arraysEqual(a, b) {
 }
 
 function debug(str, type) {
-    console.log(JSON.stringify(parse(str.split(' '), type), undefined, 2));
+    var parsed = parse(str.split(' '), type);
+    console.log(JSON.stringify(parsed, undefined, 2));
+    console.log(JSON.stringify(parsed).replace(/"/g, '').replace(/,/g, ' '));
 }
 
 debug('if 5 is less than 10 then 20 is less than 2');
-debug('5 is less than 10', TYPES.BOOL);
+//debug('5 is less than 10', TYPES.BOOL);
+debug('if 5 plus 5 is less than 15 then output 5');
