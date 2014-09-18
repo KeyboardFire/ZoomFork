@@ -39,9 +39,6 @@ var FUNCTIONS = [
 function parse(expr, rtn, depth) {
     if (rtn === undefined) rtn = TYPES.NIL;
     if (depth === undefined) depth = 1;
-    // <HACK> (see the huge comment a few lines below)
-    if (depth > 8) return false;
-    // </HACK>
 
     // loop through them
     var branches = [];
@@ -53,7 +50,7 @@ function parse(expr, rtn, depth) {
         if (rtn !== TYPES.NIL && func.rtn !== rtn) continue;
 
         /*
-         * okay, so this was a big problem before and here's an ugly kludge to solve it
+         * okay, so there was a big problem before and here's an ugly kludge to solve it
          * here's the basic idea: when the thing wanted a number, it looped through all the
          *   functions that returned numbers to see if they worked
          * eventually it would reach <number> plus <number>
@@ -62,13 +59,16 @@ function parse(expr, rtn, depth) {
          * I fixed it by searching for all the constant strings in the right order
          * which partially worked, because not everything was getting stack overflows
          * but "plus" still didn't work. because...
-         * it kept finding the same "plus" each recurse (?)
+         * it kept finding the same "plus" each recurse
          * I spent about 30 minutes on some elaborate "indeces already found" system
-         * but I realized the lazier -- uhh, I mean, more efficient -- way of doing this
-         *   would be to keep track of the recurse depth and abort when it's too high
-         * so I was lazy and did that
-         * TODO: this is really inefficient; it should only abort on n consecutive calls of
-         *   the *same* function
+         * then I decided to be lazy and just limit the recursion depth
+         * but afterwards I realized that if I just implemented the code found at HACK2, which is:
+         *   when parsing "this" "this is" "this is an" "this is an example" etc.,
+         *   simply find the last index of the next constant string
+         *   and stop recursing once you get there
+         *   then everything would be fine
+         *   (this is really hard to explain; just look at the code)
+         * so I did that
          * and now the code's really messy
          * sorry about that
          */
@@ -154,8 +154,35 @@ function parse(expr, rtn, depth) {
                 // keep adding words until the expression returns the correct value
                 var type = func.data[i], possibilities = [];
 
+                // HACK2
+                // okay, so this is a kind-of-hack related to the one mentioned in the huge comment near
+                //   the beginning of parse().
+                // find the last occurrence of the next string in the data array
+                var nextString = undefined;
+                for (var j = i+1; j < func.data.length; ++j) {
+                    if (typeof func.data[j] === 'string') {
+                        nextString = func.data[j];
+                        break;
+                    }
+                }
+                var lastIndex = undefined;
+                if (nextString === undefined) {
+                    lastIndex = expr.length;
+                } else {
+                    nextString = nextString.split(' ');
+                    for (var j = expr.length-1; j > exprIdx; --j) {
+                        if (arraysEqual(expr.slice(j, j + nextString.length), nextString)) {
+                            lastIndex = j;
+                            break;
+                        }
+                    }
+                }
+                if (lastIndex === undefined) lastIndex = expr.length;
+                // why did I just do that? well, now we can stop recursing once we reach this index
+                // so that's nice
+
                 // let expr = "this is a test"; this checks "this" "this is" "this is a" and "this is a test"
-                for (var segmentEnd = exprIdx + 1; segmentEnd <= expr.length; ++segmentEnd) {
+                for (var segmentEnd = exprIdx + 1; segmentEnd <= lastIndex; ++segmentEnd) {
                     var segment = expr.slice(exprIdx, segmentEnd);
                     // if this expression segment returns the right value
                     var parsed = parse(segment, type, depth + 1);
@@ -216,9 +243,6 @@ function parse(expr, rtn, depth) {
     return false;
 }
 
-function filter(arr, condition) {
-}
-
 function arraysEqual(a, b) {
     for (var i = 0; i < Math.max(a.length, b.length); ++i) if (a[i] !== b[i]) return false;
     return true;
@@ -226,10 +250,12 @@ function arraysEqual(a, b) {
 
 function debug(str, type) {
     var parsed = parse(str.split(' '), type);
+    console.log('\n\nPARSED "' + str + '", output:');
     console.log(JSON.stringify(parsed, undefined, 2));
     console.log(JSON.stringify(parsed).replace(/"/g, '').replace(/,/g, ' '));
 }
 
-debug('if 5 is less than 10 then 20 is less than 2');
+debug('if 5 is less than 10 then 20 is less than 2');      // => [if [[5] is less than [10]] then [[20] is less than [2]]]
 //debug('5 is less than 10', TYPES.BOOL);
-debug('if 5 plus 5 is less than 15 then output 5');
+debug('if 5 plus 5 is less than 15 then output 5');        // => [if [[[5] plus [5]] is less than [15]] then [output [5]]]
+debug('if 5 plus 5 is less than 15 then output 5 plus 5'); // => [if [[[5] plus [5]] is less than [15]] then [output [[5] plus [5]]]]
